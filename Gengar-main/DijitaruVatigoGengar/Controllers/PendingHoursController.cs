@@ -20,12 +20,19 @@ public class PendingHoursController : ControllerBase
         _mapper = mapper;
     }
 
-    [HttpPost]
+  [HttpPost]
     public IActionResult AddPendingHour([FromBody] CreatePendingHourDto pendingHourDto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        // Verificar se a colaboração entre projeto e colaborador já existe
+        var existingProjectCollaborator = _context.ProjectCollaborators
+            .FirstOrDefault(pc => pc.ProjectId == pendingHourDto.ProjectId && pc.CollaboratorId == pendingHourDto.CollaboratorId);
 
+        if (existingProjectCollaborator == null)
+        {
+            return BadRequest("A colaboração entre o projeto e o colaborador não existe.");
+        }
+
+        // Se a colaboração existe, prosseguir com a criação da hora pendente
         var pendingHour = _mapper.Map<PendingHour>(pendingHourDto);
         _context.PendingHours.Add(pendingHour);
         _context.SaveChanges();
